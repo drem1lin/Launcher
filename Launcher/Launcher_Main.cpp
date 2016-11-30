@@ -1,4 +1,5 @@
 #include <windows.h>
+//#include <Commctrl.h>
 
 #include "resource.h"
 
@@ -7,6 +8,7 @@
 UINT WM_TASKBARCREATED = 0;
 HINSTANCE g_hInst = 0;
 static BOOL g_bModalState = FALSE; //Is messagebox shown
+static BOOL g_HotKeyRegistered = FALSE;
 
 								   //===================================================================================
 								   //ShowPopupMenu
@@ -69,11 +71,36 @@ void AddTrayIcon(HWND hWnd, UINT uID, UINT uCallbackMsg, UINT uIcon)
 	nid.uID = uID;
 	nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
 	nid.uCallbackMessage = uCallbackMsg;
+	//LoadIconMetric(g_hInst, MAKEINTRESOURCE(IDI_ICON1), LIM_SMALL, &(nid.hIcon));
 	nid.hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_ICON1));
-	wcscpy(nid.szTip, L"Fast App Launcher\0");
+	wcscpy_s(nid.szTip, L"Fast App Launcher\0");
 
 	//SEND MESSAGE TO SYSTEM TRAY TO ADD ICON.--------------------------------------------
 	Shell_NotifyIcon(NIM_ADD, &nid);
+}
+
+static void WMCommandProcessor(HWND hWnd, WPARAM wParam, LPARAM lParam)
+{
+	if (g_bModalState)
+		return;
+	switch (LOWORD(wParam))
+	{
+	case ID_ABOUT:
+		g_bModalState = TRUE;
+		MessageBox(hWnd, TEXT("Hi!"), TEXT("Title"), MB_ICONINFORMATION | MB_OK);
+		g_bModalState = FALSE;
+		break;
+
+	case ID_EXIT:
+		PostMessage(hWnd, WM_DESTROY, 0, 0);
+		break;
+	case ID_PREFERENCES:
+		ShowWindow(hWnd, SW_RESTORE);
+		break;
+	default:
+		break;
+	}
+	return;
 }
 
 //===================================================================================
@@ -85,33 +112,21 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	{
 	case WM_CREATE:
 		AddTrayIcon(hWnd, 1, WM_APP, 0);
-		return 0;
-
-	case WM_CLOSE:
-		DestroyWindow(hWnd);
 		break;
 
+	case WM_CLOSE:
+		ShowWindow(hWnd, SW_HIDE);
+		//DestroyWindow(hWnd);
+		return 0;
+
 	case WM_DESTROY:
+		if (g_HotKeyRegistered)
+			UnregisterHotKey(hWnd, 100);
 		PostQuitMessage(0);
 		break;
 
 	case WM_COMMAND:
-		if (g_bModalState)
-			break;
-		switch (LOWORD(wParam)) 
-		{
-		case ID_ABOUT:
-			g_bModalState = TRUE;
-			MessageBox(hWnd, TEXT("Hi!"), TEXT("Title"), MB_ICONINFORMATION | MB_OK);
-			g_bModalState = FALSE;
-			break;
-
-		case ID_EXIT:
-			PostMessage(hWnd, WM_CLOSE, 0, 0);
-			break;
-		default:
-			break;
-		}
+		WMCommandProcessor(hWnd, wParam, lParam);
 		break;
 
 	case WM_APP:
@@ -129,6 +144,9 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			//PostMessage(hWnd, WM_APP + 1, 0, 0);
 			break;
 		}
+		break;
+	case WM_HOTKEY:
+		SendMessage(hWnd, WM_COMMAND, ID_ABOUT, 0);
 		break;
 	default:
 		{
@@ -164,7 +182,13 @@ void MyRegisterClass(HINSTANCE hInst)
 //===================================================================================
 //WinMain
 //===================================================================================
-int WINAPI WinMain(HINSTANCE hInst, HINSTANCE prev, LPSTR cmdline, int show) {
+int WINAPI wWinMain(
+	_In_ HINSTANCE hInstance,
+	_In_opt_ HINSTANCE hPrevInstance,
+	_In_ LPWSTR lpCmdLine,
+	_In_ int nShowCmd
+)
+{
 
 	{
 		//CHECK IF PREVIOUS ISTANCE IS RUNNING.-----------------------------------------------------
@@ -177,25 +201,41 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE prev, LPSTR cmdline, int show) {
 
 	WM_TASKBARCREATED = RegisterWindowMessageA("TaskbarCreated");
 
-	//REGISTER WINDOW.--------------------------------------------------------------------------
-	MyRegisterClass(hInst);
+	RECT WorkAreaSize;
+	WorkAreaSize.bottom = 720;
+	WorkAreaSize.top = 0;
+	WorkAreaSize.right = 1280;
+	WorkAreaSize.left = 0;
+	SystemParametersInfo(SPI_GETWORKAREA, 0, &WorkAreaSize, 0);
 
-	g_hInst = hInst;
+	UINT xWindowsSize = 480;
+	UINT yWindowsSize = 320;
+
+	UINT yPosition = WorkAreaSize.bottom - WorkAreaSize.top - yWindowsSize;
+	UINT xPosition = WorkAreaSize.right - WorkAreaSize.left - xWindowsSize;
+	//REGISTER WINDOW.--------------------------------------------------------------------------
+	MyRegisterClass(hInstance);
+
+	g_hInst = hInstance;
 	//CREATE WINDOW.----------------------------------------------------------------------------
-	HWND hWnd = CreateWindow(THIS_CLASSNAME, TEXT("Title"), WS_OVERLAPPEDWINDOW | ~WS_VISIBLE, 100, 100, 250, 150, NULL, NULL, hInst, NULL);
-	if (!hWnd) {
+	HWND hWnd = CreateWindow(THIS_CLASSNAME, TEXT("Title"), WS_SYSMENU | WS_CAPTION, xPosition, yPosition, xWindowsSize, yWindowsSize, NULL, NULL, hInstance, NULL);
+	if (!hWnd) 
+	{
 		MessageBox(NULL, L"Can't create window!", TEXT("Warning!"), MB_ICONERROR | MB_OK | MB_TOPMOST);
 		return 1;
 	}
 
+	ShowWindow(hWnd, SW_HIDE);
+	BOOL g_HotKeyRegistered = RegisterHotKey(hWnd, 100, MOD_CONTROL, 0x59);
 	//MONITOR MESSAGE QUEUE.--------------------------------------------------------------------
 	MSG msg;
-	while (GetMessage(&msg, NULL, 0, 0)) {
+	while (GetMessage(&msg, NULL, 0, 0)) 
+	{
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
 	//DESTROY WINDOW.---------------------------------------------------------------------------
-	UnregisterClass(THIS_CLASSNAME, hInst);
+	UnregisterClass(THIS_CLASSNAME, hInstance);
 	RemoveTrayIcon(hWnd, 1);
 	return msg.wParam;
 }
