@@ -2,14 +2,14 @@
 //#include <Commctrl.h>
 
 #include "resource.h"
+#include "HotKey.h"
 
 #define THIS_CLASSNAME L"Kaptur's Launcher"
 
 UINT WM_TASKBARCREATED = 0;
 HINSTANCE g_hInst = 0;
 static BOOL g_bModalState = FALSE; //Is messagebox shown
-static BOOL g_HotKeyRegistered = FALSE;
-
+HotKey* hk = nullptr;
 								   //===================================================================================
 								   //ShowPopupMenu
 								   //===================================================================================
@@ -120,8 +120,6 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		return 0;
 
 	case WM_DESTROY:
-		if (g_HotKeyRegistered)
-			UnregisterHotKey(hWnd, 100);
 		PostQuitMessage(0);
 		break;
 
@@ -146,7 +144,10 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		}
 		break;
 	case WM_HOTKEY:
-		SendMessage(hWnd, WM_COMMAND, ID_ABOUT, 0);
+		if (hk->isPressedKeyMatch(LOWORD((UINT)lParam), (UINT)wParam))
+		{
+			hk->ExecuteCommand();
+		}
 		break;
 	default:
 		{
@@ -199,6 +200,8 @@ int WINAPI wWinMain(
 		}
 	}
 
+	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+
 	WM_TASKBARCREATED = RegisterWindowMessageA("TaskbarCreated");
 
 	RECT WorkAreaSize;
@@ -226,7 +229,8 @@ int WINAPI wWinMain(
 	}
 
 	ShowWindow(hWnd, SW_HIDE);
-	BOOL g_HotKeyRegistered = RegisterHotKey(hWnd, 100, MOD_CONTROL, 0x59);
+	
+	hk = new HotKey(1,hWnd, MOD_CONTROL,0x59, L"test.exe", 7, true);
 	//MONITOR MESSAGE QUEUE.--------------------------------------------------------------------
 	MSG msg;
 	while (GetMessage(&msg, NULL, 0, 0)) 
@@ -236,6 +240,7 @@ int WINAPI wWinMain(
 	}
 	//DESTROY WINDOW.---------------------------------------------------------------------------
 	UnregisterClass(THIS_CLASSNAME, hInstance);
+	hk->~HotKey();
 	RemoveTrayIcon(hWnd, 1);
 	return msg.wParam;
 }
