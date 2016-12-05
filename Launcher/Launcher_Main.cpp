@@ -4,6 +4,8 @@
 #include "resource.h"
 #include "HotKey.h"
 
+#include "Launcher_child.h"
+
 #define THIS_CLASSNAME L"Kaptur's Launcher"
 
 UINT WM_TASKBARCREATED = 0;
@@ -111,8 +113,28 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	switch (uMsg)
 	{
 	case WM_CREATE:
+	{		
 		AddTrayIcon(hWnd, 1, WM_APP, 0);
+		CreateWindowEx(WS_EX_OVERLAPPEDWINDOW, CHILD_CLASSNAME, L"Child 1", WS_CHILDWINDOW | WS_VISIBLE,
+			5,
+			5,
+			450,
+			50,
+			hWnd,
+			NULL,
+			g_hInst,
+			NULL);
+		CreateWindowEx(WS_EX_OVERLAPPEDWINDOW, CHILD_CLASSNAME, L"Child 1", WS_CHILDWINDOW | WS_VISIBLE,
+			5,
+			65,
+			450,
+			50,
+			hWnd,
+			NULL,
+			g_hInst,
+			NULL);
 		break;
+	}
 
 	case WM_CLOSE:
 		ShowWindow(hWnd, SW_HIDE);
@@ -133,7 +155,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		switch (lParam) 
 		{
 		case WM_LBUTTONDBLCLK:
-			SendMessage(hWnd, WM_COMMAND, ID_ABOUT, 0);
+			ShowWindow(hWnd,SW_RESTORE);
 			break;
 
 		case WM_RBUTTONUP:
@@ -159,7 +181,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-void MyRegisterClass(HINSTANCE hInst)
+void RegisterMainClass(HINSTANCE hInst)
 {
 	WNDCLASSEX wclx;
 	memset(&wclx, 0, sizeof(wclx));
@@ -217,7 +239,8 @@ int WINAPI wWinMain(
 	UINT yPosition = WorkAreaSize.bottom - WorkAreaSize.top - yWindowsSize;
 	UINT xPosition = WorkAreaSize.right - WorkAreaSize.left - xWindowsSize;
 	//REGISTER WINDOW.--------------------------------------------------------------------------
-	MyRegisterClass(hInstance);
+	RegisterMainClass(hInstance);
+	RegisterChildClass(hInstance);
 
 	g_hInst = hInstance;
 	//CREATE WINDOW.----------------------------------------------------------------------------
@@ -242,5 +265,5 @@ int WINAPI wWinMain(
 	UnregisterClass(THIS_CLASSNAME, hInstance);
 	hk->~HotKey();
 	RemoveTrayIcon(hWnd, 1);
-	return msg.wParam;
+	return (int)msg.wParam;
 }

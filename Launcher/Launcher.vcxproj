@@ -159,10 +159,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="HotKey.cpp" />
+    <ClCompile Include="Launcher_Child.cpp" />
     <ClCompile Include="Launcher_Main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HotKey.h" />
+    <ClInclude Include="Launcher_child.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
