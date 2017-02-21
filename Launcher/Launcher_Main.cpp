@@ -1,5 +1,5 @@
 #include <windows.h>
-//#include <Commctrl.h>
+#include <Commctrl.h>
 
 #include "resource.h"
 #include "HotKey.h"
@@ -118,15 +118,6 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		CreateWindowEx(WS_EX_OVERLAPPEDWINDOW, CHILD_CLASSNAME, L"Child 1", WS_CHILDWINDOW | WS_VISIBLE,
 			5,
 			5,
-			450,
-			50,
-			hWnd,
-			NULL,
-			g_hInst,
-			NULL);
-		CreateWindowEx(WS_EX_OVERLAPPEDWINDOW, CHILD_CLASSNAME, L"Child 1", WS_CHILDWINDOW | WS_VISIBLE,
-			5,
-			65,
 			450,
 			50,
 			hWnd,
@@ -253,7 +244,7 @@ int WINAPI wWinMain(
 
 	ShowWindow(hWnd, SW_HIDE);
 	
-	hk = new HotKey(1,hWnd, MOD_CONTROL,0x59, L"test.exe", 7, true);
+	hk = new HotKey(1,hWnd, MOD_CONTROL,0x59, L"C:\\Windows\\System32\\notepad.exe", 2*31, true);
 	//MONITOR MESSAGE QUEUE.--------------------------------------------------------------------
 	MSG msg;
 	while (GetMessage(&msg, NULL, 0, 0)) 

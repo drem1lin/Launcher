@@ -51,8 +51,8 @@ void HotKey::ExecuteCommand()
 		shExInfo.lpVerb = TEXT("runas");
 	else
 		shExInfo.lpVerb = TEXT("open");										// Operation to perform
-	shExInfo.lpFile = TEXT("C:\\Windows\\System32\\notepad.exe");       // Application to start    
-	shExInfo.lpParameters = TEXT("");                  // Additional parameters
+	shExInfo.lpFile = this->Path;       // Application to start    
+	shExInfo.lpParameters = this->Agrument;                  // Additional parameters
 	shExInfo.lpDirectory = 0;
 	shExInfo.nShow = SW_SHOW;
 	shExInfo.hInstApp = 0;
