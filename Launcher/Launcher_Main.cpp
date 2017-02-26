@@ -110,16 +110,23 @@ static void WMCommandProcessor(HWND hWnd, WPARAM wParam, LPARAM lParam)
 //===================================================================================
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
-	switch (uMsg)
+switch (uMsg)
 	{
 	case WM_CREATE:
 	{		
+		RECT WindowRectSize = { 0 };
+		int left = 0, right = 0, top = 0, bottom = 0;
 		AddTrayIcon(hWnd, 1, WM_APP, 0);
-		CreateWindowEx(WS_EX_OVERLAPPEDWINDOW, CHILD_CLASSNAME, L"Child 1", WS_CHILDWINDOW | WS_VISIBLE,
-			5,
-			5,
-			450,
-			50,
+		if (!GetClientRect(hWnd, &WindowRectSize))
+		{
+			right = 470;
+			bottom = 310;
+		}
+		CreateWindowEx(0, CHILD_CLASSNAME, L"Child 1", WS_CHILDWINDOW | WS_VISIBLE,
+			WindowRectSize.left,
+			WindowRectSize.top,
+			WindowRectSize.right,
+			100,
 			hWnd,
 			NULL,
 			g_hInst,
@@ -235,7 +242,7 @@ int WINAPI wWinMain(
 
 	g_hInst = hInstance;
 	//CREATE WINDOW.----------------------------------------------------------------------------
-	HWND hWnd = CreateWindow(THIS_CLASSNAME, TEXT("Title"), WS_SYSMENU | WS_CAPTION, xPosition, yPosition, xWindowsSize, yWindowsSize, NULL, NULL, hInstance, NULL);
+	HWND hWnd = CreateWindow(THIS_CLASSNAME, TEXT("Title"), WS_SYSMENU | WS_CAPTION | WS_VSCROLL, xPosition, yPosition, xWindowsSize, yWindowsSize, NULL, NULL, hInstance, NULL);
 	if (!hWnd) 
 	{
 		MessageBox(NULL, L"Can't create window!", TEXT("Warning!"), MB_ICONERROR | MB_OK | MB_TOPMOST);

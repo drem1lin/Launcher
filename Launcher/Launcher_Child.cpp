@@ -1,10 +1,162 @@
 #include "Launcher_child.h"
 #include <string>
+#include <CommCtrl.h>
 
 static void WMCommandProcessor(HWND hWnd, WPARAM wParam, LPARAM lParam);
 
-extern HINSTANCE g_hInst;
+//extern HINSTANCE g_hInst;
+#define PADDING 5
+#define PADDING_HALF 3
 
+void CreateProgramSelector(WINDOW_CONTROLS* wc, HWND hWnd, CREATESTRUCT* CreateStruct)
+{
+	wc->selectprogramLabelHWND = CreateWindowEx(0, WC_STATIC, L"selectprogramLabelHWND",
+		WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+		CreateStruct->x + PADDING,
+		CreateStruct->y + PADDING,
+		(CreateStruct->cx / 2) * 3 / 4 - PADDING_HALF - PADDING,
+		CreateStruct->cy / 4 - PADDING_HALF - PADDING,//5+3		
+		hWnd, (HMENU)(ID_OPEN_FILE_LABEL),
+		CreateStruct->hInstance,
+		NULL);
+	SetWindowText(wc->selectprogramLabelHWND, L"Select program:");
+
+	wc->openfileButtonHWND = CreateWindowEx(0, WC_BUTTON, L"Select", WS_CHILDWINDOW | WS_VISIBLE,
+		CreateStruct->x + CreateStruct->cx * 3 / 8 + PADDING_HALF,
+		CreateStruct->y + PADDING,
+		CreateStruct->cx / 8 - PADDING_HALF - PADDING_HALF,
+		CreateStruct->cy / 4 - PADDING - PADDING_HALF,
+		hWnd,
+		(HMENU)ID_OPEN_FILE_DIALOG_BUTTON,
+		CreateStruct->hInstance,
+		NULL);
+
+	wc->filepathEditWindowHWND = CreateWindowEx(
+		WS_EX_CLIENTEDGE, WC_EDIT,   // predefined class 
+		NULL,         // no window title 
+		WS_CHILD | WS_VISIBLE | ES_LEFT,
+		CreateStruct->x + PADDING,
+		CreateStruct->y + CreateStruct->cy / 4 + PADDING_HALF,
+		CreateStruct->cx / 2 - PADDING_HALF - PADDING,
+		CreateStruct->cy / 4 - PADDING_HALF - PADDING_HALF,   // set size in WM_SIZE message 
+		hWnd,         // parent window 
+		(HMENU)ID_OPEN_FILE_EDIT,   // edit control ID 
+		CreateStruct->hInstance,
+		NULL);        // pointer not needed 
+}
+
+void CreateHotKeySelector(WINDOW_CONTROLS* wc, HWND hWnd, CREATESTRUCT* CreateStruct)
+{
+	wc->hotkeyLabelHWND = CreateWindowEx(0, WC_STATIC, L"hotkeyLabelHWND",
+		WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+		CreateStruct->x + CreateStruct->cx/2 + PADDING_HALF,
+		CreateStruct->y + PADDING,
+		CreateStruct->cx / 2 - PADDING - PADDING_HALF,
+		CreateStruct->cy / 4 - PADDING_HALF - PADDING,//5+3		
+		hWnd, (HMENU)(ID_HOTKEY_LABEL),
+		CreateStruct->hInstance,
+		NULL);
+	SetWindowText(wc->hotkeyLabelHWND, L"Choose hotkey:");
+
+	wc->modifiersComboBoxHWND = CreateWindowEx(0, WC_COMBOBOX, L"ModifiersListBox", CBS_DROPDOWNLIST | WS_CHILDWINDOW | WS_VISIBLE | WS_VSCROLL | ES_AUTOVSCROLL,
+		CreateStruct->x + CreateStruct->cx / 2 + PADDING_HALF,
+		CreateStruct->y + CreateStruct->cy / 4 + PADDING_HALF,
+		CreateStruct->cx/4 - PADDING_HALF - PADDING_HALF,
+		CreateStruct->cy - PADDING_HALF - PADDING_HALF,
+		hWnd,
+		(HMENU)ID_MODIFIERS_LISTBOX,
+		CreateStruct->hInstance,
+		NULL);
+
+	SendMessage(wc->modifiersComboBoxHWND, CB_ADDSTRING, 0, (LPARAM)L"MOD_ALT");
+	SendMessage(wc->modifiersComboBoxHWND, CB_ADDSTRING, 0, (LPARAM)L"MOD_CONTROL");
+	SendMessage(wc->modifiersComboBoxHWND, CB_ADDSTRING, 0, (LPARAM)L"MOD_SHIFT");
+	SendMessage(wc->modifiersComboBoxHWND, CB_ADDSTRING, 0, (LPARAM)L"MOD_WIN");
+	SendMessage(wc->modifiersComboBoxHWND, CB_SETCURSEL, 0, 0);
+
+	wc->virtualkeyLstBox = CreateWindowEx(WS_EX_CLIENTEDGE, WC_EDIT,   // predefined class 
+		NULL,         // no window title 
+		WS_CHILD | WS_VISIBLE | ES_LEFT,
+		CreateStruct->x + CreateStruct->cx *3/4 + PADDING_HALF,
+		CreateStruct->y + CreateStruct->cy / 4 + PADDING_HALF,
+		CreateStruct->cx / 4 - PADDING - PADDING_HALF,
+		CreateStruct->cy / 4 - PADDING_HALF - PADDING_HALF ,   // set size in WM_SIZE message 
+		hWnd,         // parent window 
+		(HMENU)ID_VIRTUAL_BUTTON_EDIT,   // edit control ID 
+		CreateStruct->hInstance,
+		NULL);        // pointer not needed 
+}
+
+void CreateParametersSelector(WINDOW_CONTROLS* wc, HWND hWnd, CREATESTRUCT* CreateStruct)
+{
+	wc->argumentsLabelHWND = CreateWindowEx(0, WC_STATIC, L"argumentsLabelHWND",
+		WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+		CreateStruct->x + PADDING,
+		CreateStruct->y + CreateStruct->cy / 2 + PADDING_HALF,
+		CreateStruct->cx / 2 - PADDING_HALF - PADDING,
+		CreateStruct->cy / 4 - PADDING_HALF - PADDING_HALF,//5+3		
+		hWnd, (HMENU)(ID_ARGS_LABEL),
+		CreateStruct->hInstance,
+		NULL);
+	SetWindowText(wc->argumentsLabelHWND, L"Enter program args:");
+
+	wc->argumentsEditWindowHWND = CreateWindowEx(
+		WS_EX_CLIENTEDGE, WC_EDIT,   // predefined class 
+		NULL,         // no window title 
+		WS_CHILD | WS_VISIBLE | ES_LEFT,
+		CreateStruct->x + PADDING,
+		CreateStruct->y + CreateStruct->cy * 3 / 4 + PADDING_HALF,
+		CreateStruct->cx / 2 - PADDING_HALF - PADDING,
+		CreateStruct->cy / 4 - PADDING_HALF - PADDING,   // set size in WM_SIZE message 
+		hWnd,         // parent window 
+		(HMENU)ID_ARGS_EDIT,   // edit control ID 
+		CreateStruct->hInstance,
+		NULL);        // pointer not needed 
+}
+
+void CreateAsAdminAndButtons(WINDOW_CONTROLS* wc, HWND hWnd, CREATESTRUCT* CreateStruct)
+{
+	wc->asadminLabelHWND = CreateWindowEx(0, WC_STATIC, L"asadminLabelHWND",
+		WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+		CreateStruct->x + CreateStruct->cx / 2 + PADDING_HALF,
+		CreateStruct->y + CreateStruct->cy / 2 + PADDING_HALF,
+		CreateStruct->cx / 2 - PADDING_HALF - PADDING_HALF,
+		CreateStruct->cy / 4 - PADDING_HALF - PADDING_HALF,//5+3		
+		hWnd, (HMENU)(ID_AS_ADMIN_LABEL),
+		CreateStruct->hInstance,
+		NULL);
+	SetWindowText(wc->asadminLabelHWND, L"As admin ");
+
+	wc->asadminChechboxHWND = CreateWindowEx(0, WC_BUTTON, L"", BS_AUTOCHECKBOX | BS_CHECKBOX | WS_CHILDWINDOW | WS_VISIBLE,
+		CreateStruct->x + CreateStruct->cx *3/ 4 -15-PADDING_HALF,
+		CreateStruct->y + CreateStruct->cy / 2 + PADDING_HALF,
+		CreateStruct->cx / 2 - PADDING_HALF - PADDING_HALF,
+		CreateStruct->cy / 4 - PADDING_HALF - PADDING_HALF,//5+3
+		hWnd,
+		(HMENU)ID_AS_ADMIN_CHECKBOX,
+		CreateStruct->hInstance,
+		NULL);
+
+	wc->saveButtonHWND = CreateWindowEx(0, WC_BUTTON, L"Save", WS_CHILDWINDOW | WS_VISIBLE,
+		CreateStruct->x + CreateStruct->cx /2 + PADDING_HALF,
+		CreateStruct->y + CreateStruct->cy*3/4+PADDING_HALF,
+		CreateStruct->cx / 4 - PADDING_HALF - PADDING_HALF,
+		CreateStruct->cy / 4 - PADDING - PADDING_HALF,
+		hWnd,
+		(HMENU)ID_SAVE_BUTTON,
+		CreateStruct->hInstance,
+		NULL);
+
+	wc->deleteButtonHWND = CreateWindowEx(0, WC_BUTTON, L"Delete", WS_CHILDWINDOW | WS_VISIBLE,
+		CreateStruct->x + CreateStruct->cx * 3 / 4 + PADDING_HALF,
+		CreateStruct->y + CreateStruct->cy * 3 / 4 + PADDING_HALF,
+		CreateStruct->cx / 4 - PADDING_HALF - PADDING,
+		CreateStruct->cy / 4 - PADDING - PADDING_HALF,
+		hWnd,
+		(HMENU)ID_DELETE_BUTTON,
+		CreateStruct->hInstance,
+		NULL);
+}
 //===================================================================================
 //WndProc
 //===================================================================================
@@ -14,44 +166,58 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	{
 	case WM_CREATE:
 	{
+		CREATESTRUCT* CreateStruct = (CREATESTRUCT*)lParam;
 		WINDOW_CONTROLS* wc =	(WINDOW_CONTROLS*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINDOW_CONTROLS));
 		if (wc == NULL)
 		{
 			MessageBox(hWnd, L"Out of Memory.\nApplication closing.", L"Error", MB_OK);
 			ExitProcess(1);
 		}
-		wc->filepathEditWindowHWND = CreateWindowEx(
-			WS_EX_CLIENTEDGE, L"EDIT",   // predefined class 
-			NULL,         // no window title 
-			WS_CHILD | WS_VISIBLE | ES_LEFT ,
-			5, 15, 290, 20,   // set size in WM_SIZE message 
-			hWnd,         // parent window 
-			(HMENU)ID_OPEN_FILE_EDIT,   // edit control ID 
-			((LPCREATESTRUCT)lParam)->hInstance,
-			NULL);        // pointer not needed 
+		//CreateWindowEx(0,L"Button", L"", WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
+		//	CreateStruct->x-1, CreateStruct->y-1, CreateStruct->cx-1, CreateStruct->cy-1, hWnd, 0, CreateStruct->hInstance, 0);
+		CreateProgramSelector(wc, hWnd, CreateStruct);
+		CreateHotKeySelector(wc, hWnd, CreateStruct);
+		CreateParametersSelector(wc, hWnd, CreateStruct);
+		CreateAsAdminAndButtons(wc, hWnd, CreateStruct);
+/*
 
-		wc->openfileButtonHWND = CreateWindowEx(WS_EX_CLIENTEDGE, L"BUTTON", L"Open", WS_CHILDWINDOW | WS_VISIBLE,
-			305,
-			15,
-			50,
-			20,
-			hWnd,
-			(HMENU)ID_OPEN_FILE_DIALOG_BUTTON,
-			((LPCREATESTRUCT)lParam)->hInstance,
-			NULL);
-
-		wc->asadminChechboxHWND = CreateWindowEx(0, L"BUTTON", L"Checkbox", BS_AUTOCHECKBOX| BS_CHECKBOX| WS_CHILDWINDOW | WS_VISIBLE, 
+		wc->asadminChechboxHWND = CreateWindowEx(0, WC_BUTTON, L"Checkbox", BS_AUTOCHECKBOX| BS_CHECKBOX| WS_CHILDWINDOW | WS_VISIBLE,
 			360,
 			15,
 			20,
 			20,
 			hWnd,
 			(HMENU)ID_AS_ADMIN_CHECKBOX,
-			((LPCREATESTRUCT)lParam)->hInstance,
+			CreateStruct->hInstance,
 			NULL);
-		
+
+		wc->asadminLabelHWND = CreateWindowEx(0, WC_STATIC, L"ST_U",
+			WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+			385, 15, 20, 20,
+			hWnd, (HMENU)(ID_AS_ADMIN_LABEL),
+			CreateStruct->hInstance,
+			NULL);
+		SetWindowText(wc->asadminLabelHWND, L"As admin ");
+
+		wc->modifiersListBox = CreateWindowEx(WS_EX_CLIENTEDGE, WC_COMBOBOX, L"ModifiersListBox", CBS_DROPDOWNLIST| WS_CHILDWINDOW | WS_VISIBLE | WS_VSCROLL | ES_AUTOVSCROLL,
+			410,
+			15,
+			120,
+			300,
+			hWnd,
+			(HMENU)ID_MODIFIERS_LISTBOX,
+			CreateStruct->hInstance,
+			NULL);
+
+		SendMessage(wc->modifiersListBox, CB_ADDSTRING, 0, (LPARAM)L"MOD_ALT");
+		SendMessage(wc->modifiersListBox, CB_ADDSTRING, 0, (LPARAM)L"MOD_CONTROL");
+		SendMessage(wc->modifiersListBox, CB_ADDSTRING, 0, (LPARAM)L"MOD_SHIFT");
+		SendMessage(wc->modifiersListBox, CB_ADDSTRING, 0, (LPARAM)L"MOD_WIN");
+		SendMessage(wc->modifiersListBox, CB_SETCURSEL, 0, 0);
+	*/	
 		if (NULL != SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)(wc)))
 			MessageBox(hWnd, std::to_wstring(GetLastError()).c_str(), L"Error", MB_OK);
+
 
 		break;
 	}
@@ -59,13 +225,14 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		WMCommandProcessor(hWnd, wParam, lParam);
 		break;
 
+	case WM_QUIT:
 	case WM_CLOSE:
 		//ShowWindow(hWnd, SW_HIDE);
 		DestroyWindow(hWnd);
-		return 0;
+		break;
 
 	case WM_DESTROY:
-		HeapFree(GetProcessHeap(), 0, (LPVOID)GetWindowLongPtr(hWnd, GWLP_USERDATA));
+		HeapFree(GetProcessHeap(), 0, (LPVOID)GetWindowLongPtr(hWnd, GWLP_USERDATA)); //don't call
 		PostQuitMessage(0);
 		break;
 
@@ -96,7 +263,7 @@ void RegisterChildClass(HINSTANCE hInst)
 	RegisterClassEx(&wclx);
 }
 
-bool GetExecutibleFileName(HWND hwnd, std::wstring& FileName)
+BOOL GetExecutibleFileName(HWND hwnd, std::wstring& FileName)
 {
 	OPENFILENAME ofn;       // common dialog box structure
 	wchar_t szFile[MAX_PATH];       // buffer for file name
@@ -109,16 +276,16 @@ bool GetExecutibleFileName(HWND hwnd, std::wstring& FileName)
 	// Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
 	// use the contents of szFile to initialize itself.
 	ofn.lpstrFile[0] = '\0';
-	ofn.nMaxFile = sizeof(szFile);
-	ofn.lpstrFilter = L"*.exe\0";
+	ofn.nMaxFile = MAX_PATH;
+	ofn.lpstrFilter = L"Executible files\0*.exe\0\0";
 	ofn.nFilterIndex = 1;
 	ofn.lpstrFileTitle = NULL;
 	ofn.nMaxFileTitle = 0;
 	ofn.lpstrInitialDir = NULL;
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_ENABLESIZING;
 
 	// Display the Open dialog box. 
-	bool b = GetOpenFileName(&ofn);
+	BOOL b = GetOpenFileName(&ofn);
 	if (b == TRUE)
 		FileName.append(ofn.lpstrFile);
 	return b;
