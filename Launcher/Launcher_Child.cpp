@@ -2,6 +2,9 @@
 #include <string>
 #include <CommCtrl.h>
 
+#include "DBFunctions.h"
+#include "Defines.h"
+
 static void WMCommandProcessor(HWND hWnd, WPARAM wParam, LPARAM lParam);
 
 //extern HINSTANCE g_hInst;
@@ -58,7 +61,7 @@ void CreateHotKeySelector(WINDOW_CONTROLS* wc, HWND hWnd, CREATESTRUCT* CreateSt
 		NULL);
 	SetWindowText(wc->hotkeyLabelHWND, L"Choose hotkey:");
 
-	wc->modifiersComboBoxHWND = CreateWindowEx(0, WC_COMBOBOX, L"ModifiersListBox", CBS_DROPDOWNLIST | WS_CHILDWINDOW | WS_VISIBLE | WS_VSCROLL | ES_AUTOVSCROLL,
+	wc->modifiersComboBoxHWND = CreateWindowEx(0, WC_COMBOBOX, L"ModifiersComboBox", CBS_DROPDOWNLIST | WS_CHILDWINDOW | WS_VISIBLE | WS_VSCROLL | ES_AUTOVSCROLL,
 		CreateStruct->x + CreateStruct->cx / 2 + PADDING_HALF,
 		CreateStruct->y + CreateStruct->cy / 4 + PADDING_HALF,
 		CreateStruct->cx/4 - PADDING_HALF - PADDING_HALF,
@@ -74,7 +77,7 @@ void CreateHotKeySelector(WINDOW_CONTROLS* wc, HWND hWnd, CREATESTRUCT* CreateSt
 	SendMessage(wc->modifiersComboBoxHWND, CB_ADDSTRING, 0, (LPARAM)L"MOD_WIN");
 	SendMessage(wc->modifiersComboBoxHWND, CB_SETCURSEL, 0, 0);
 
-	wc->virtualkeyLstBox = CreateWindowEx(WS_EX_CLIENTEDGE, WC_EDIT,   // predefined class 
+	wc->virtualkeyEditWindowHWND = CreateWindowEx(WS_EX_CLIENTEDGE, WC_EDIT,   // predefined class 
 		NULL,         // no window title 
 		WS_CHILD | WS_VISIBLE | ES_LEFT,
 		CreateStruct->x + CreateStruct->cx *3/4 + PADDING_HALF,
@@ -291,6 +294,46 @@ BOOL GetExecutibleFileName(HWND hwnd, std::wstring& FileName)
 	return b;
 }
 
+bool InitializeHotKeyFromWindowData(WINDOW_CONTROLS* wc, HotKey& key, HWND hWnd)
+{
+	UINT fsModifiers;
+	UINT vk;
+	//CommandData
+	std::wstring Path;
+	std::wstring Agrument;
+	bool bRequireAdmin;
+	
+	int cTxtLen;
+	PWSTR pszMem;
+
+	int argslen = GetWindowTextLength(wc->argumentsEditWindowHWND);
+	int pathlen = GetWindowTextLength(wc->filepathEditWindowHWND);
+	int vklen = GetWindowTextLength(wc->virtualkeyEditWindowHWND);
+	if (pathlen == 0 && argslen == 0)
+		return false;
+	cTxtLen = max(max(pathlen, argslen), vklen);
+	pszMem = (PWSTR)VirtualAlloc((LPVOID)NULL, cTxtLen + 1, MEM_COMMIT,PAGE_READWRITE);
+	if (!pszMem)
+		return false;
+	GetWindowText(wc->filepathEditWindowHWND, pszMem, cTxtLen + 1);
+	Path.append(pszMem);
+	RtlZeroMemory(pszMem, cTxtLen + 1);
+	GetWindowText(wc->argumentsEditWindowHWND, pszMem, cTxtLen + 1);
+	Agrument.append(pszMem);
+	RtlZeroMemory(pszMem, cTxtLen + 1);
+	GetWindowText(wc->virtualkeyEditWindowHWND, pszMem, cTxtLen + 1);
+	vk = pszMem[0];
+	VirtualFree(pszMem, 0, MEM_RELEASE);
+
+	bRequireAdmin = SendMessage(wc->asadminChechboxHWND, BM_GETCHECK, 0, 0) == BST_CHECKED ? TRUE: FALSE;
+	
+	fsModifiers = (UINT) SendMessage(wc->modifiersComboBoxHWND, CB_GETCURSEL, 0, 0);
+
+	HotKey* tmpKey = new HotKey(0, hWnd, fsModifiers, vk, const_cast<wchar_t*>(Path.c_str()), Path.size(), const_cast<wchar_t*>(Agrument.c_str()), argslen, bRequireAdmin);
+	return true;
+}
+
+
 static void WMCommandProcessor(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
@@ -303,6 +346,15 @@ static void WMCommandProcessor(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		WINDOW_CONTROLS* wc = (PWINDOW_CONTROLS)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 		if (wc->filepathEditWindowHWND!=NULL)
 			SetWindowText(wc->filepathEditWindowHWND, FileName.c_str());
+		break;
+	}
+	case ID_SAVE_BUTTON:
+	{
+		HotKey key;
+		WINDOW_CONTROLS* wc = (PWINDOW_CONTROLS)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		if (wc != 0 && InitializeHotKeyFromWindowData(wc, key, hWnd))
+			SaveSettingsToDataBase("Settings.db", "COMMANDS", key);
+			wc++;
 		break;
 	}
 	default:

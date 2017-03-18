@@ -1,12 +1,15 @@
 #include <windows.h>
 #include <Commctrl.h>
+#include <vector>
 
 #include "resource.h"
 #include "HotKey.h"
+#include "Defines.h"
 
 #include "Launcher_child.h"
+#include "../sqlite/sqlite3.h"
 
-#define THIS_CLASSNAME L"Kaptur's Launcher"
+
 
 UINT WM_TASKBARCREATED = 0;
 HINSTANCE g_hInst = 0;
@@ -122,6 +125,9 @@ switch (uMsg)
 			right = 470;
 			bottom = 310;
 		}
+
+
+
 		CreateWindowEx(0, CHILD_CLASSNAME, L"Child 1", WS_CHILDWINDOW | WS_VISIBLE,
 			WindowRectSize.left,
 			WindowRectSize.top,
@@ -200,6 +206,8 @@ void RegisterMainClass(HINSTANCE hInst)
 	RegisterClassEx(&wclx);
 }
 
+
+
 //===================================================================================
 //WinMain
 //===================================================================================
@@ -251,7 +259,7 @@ int WINAPI wWinMain(
 
 	ShowWindow(hWnd, SW_HIDE);
 	
-	hk = new HotKey(1,hWnd, MOD_CONTROL,0x59, L"C:\\Windows\\System32\\notepad.exe", 2*31, true);
+	//hk = new HotKey(1,hWnd, MOD_CONTROL,0x59, L"C:\\Windows\\System32\\notepad.exe", 2*31, true);
 	//MONITOR MESSAGE QUEUE.--------------------------------------------------------------------
 	MSG msg;
 	while (GetMessage(&msg, NULL, 0, 0)) 

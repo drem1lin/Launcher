@@ -30,7 +30,7 @@ typedef struct _WINDOW_CONTROLS
 
 	HWND hotkeyLabelHWND;
 	HWND modifiersComboBoxHWND;
-	HWND virtualkeyLstBox;
+	HWND virtualkeyEditWindowHWND;
 
 	HWND argumentsLabelHWND;
 	HWND argumentsEditWindowHWND;

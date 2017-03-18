@@ -20,7 +20,7 @@ HotKey::HotKey(int id, HWND hWnd,UINT fsModifiers,UINT vk, wchar_t* Command, siz
 	
 	this->bRequireAdmin = asAdmin;
 
-	this->isHotKeyRegistered = RegisterHotKey(hWnd, id, fsModifiers, vk);
+	this->isHotKeyRegistered = false;
 }
 
 HotKey::HotKey(int id, HWND hWnd, UINT fsModifiers, UINT vk, wchar_t* Command, size_t CommandLength, bool asAdmin) 
@@ -35,10 +35,16 @@ HotKey::HotKey(int id, HWND hWnd, UINT fsModifiers, UINT vk, wchar_t* Command, s
 
 }
 
+HotKey::HotKey()
+	: HotKey(0, 0, 0, 0, (wchar_t*)NULL, 0, (wchar_t*)NULL, 0, false)
+{
+
+}
 
 HotKey::~HotKey()
 {
-	UnregisterHotKey(hWnd, id);
+	if(isHotKeyRegistered)
+		UnregisterHotKey(hWnd, id);
 }
 
 void HotKey::ExecuteCommand()
@@ -60,11 +66,23 @@ void HotKey::ExecuteCommand()
 	ShellExecuteEx(&shExInfo);
 }
 
-bool HotKey::isPressedKeyMatch(UINT fsModifiers, UINT id)
+BOOL HotKey::isPressedKeyMatch(UINT fsModifiers, UINT id)
 {
 	if (fsModifiers==this->fsModifiers && id==this->id)
 	{
-		return true;
+		return TRUE;
 	}
-	return false;
+	return FALSE;
+}
+
+BOOL HotKey::Register()
+{
+	this->isHotKeyRegistered = RegisterHotKey(hWnd, id, fsModifiers, vk);
+	return this->isHotKeyRegistered;
+}
+
+BOOL HotKey::Unregister()
+{
+	this->isHotKeyRegistered = ~UnregisterHotKey(hWnd, id);
+	return this->isHotKeyRegistered;
 }

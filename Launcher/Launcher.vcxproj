@@ -112,6 +112,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -158,11 +159,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\sqlite\sqlite3.c" />
+    <ClCompile Include="DBFunctions.cpp" />
+    <ClInclude Include="DBFunctions.h" />
     <ClCompile Include="HotKey.cpp" />
     <ClCompile Include="Launcher_Child.cpp" />
     <ClCompile Include="Launcher_Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\sqlite\sqlite3.h" />
+    <ClInclude Include="Defines.h" />
     <ClInclude Include="HotKey.h" />
     <ClInclude Include="Launcher_child.h" />
     <ClInclude Include="resource.h" />
