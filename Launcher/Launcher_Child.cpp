@@ -329,7 +329,7 @@ bool InitializeHotKeyFromWindowData(WINDOW_CONTROLS* wc, HotKey& key, HWND hWnd)
 	
 	fsModifiers = (UINT) SendMessage(wc->modifiersComboBoxHWND, CB_GETCURSEL, 0, 0);
 
-	HotKey* tmpKey = new HotKey(0, hWnd, fsModifiers, vk, const_cast<wchar_t*>(Path.c_str()), Path.size(), const_cast<wchar_t*>(Agrument.c_str()), argslen, bRequireAdmin);
+	key = *new HotKey(0, hWnd, fsModifiers, vk, const_cast<wchar_t*>(Path.c_str()), Path.size(), const_cast<wchar_t*>(Agrument.c_str()), argslen, bRequireAdmin);
 	return true;
 }
 
@@ -353,7 +353,11 @@ static void WMCommandProcessor(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		HotKey key;
 		WINDOW_CONTROLS* wc = (PWINDOW_CONTROLS)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 		if (wc != 0 && InitializeHotKeyFromWindowData(wc, key, hWnd))
-			SaveSettingsToDataBase("Settings.db", "COMMANDS", key);
+		{
+			std::string dbName;
+			GetDataBaseName(dbName);
+			SaveSettingsToDataBase(const_cast<char*>(dbName.c_str()), "COMMANDS", key);
+		}
 			wc++;
 		break;
 	}

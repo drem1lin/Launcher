@@ -8,6 +8,7 @@
 
 #include "Launcher_child.h"
 #include "../sqlite/sqlite3.h"
+#include "DBFunctions.h"
 
 
 
@@ -126,7 +127,10 @@ switch (uMsg)
 			bottom = 310;
 		}
 
-
+		std::vector<HotKey> keys;
+		std::string dbName;
+		GetDataBaseName(dbName);
+		ReadSettingFromDatabase(const_cast<char*>(dbName.c_str()), keys);
 
 		CreateWindowEx(0, CHILD_CLASSNAME, L"Child 1", WS_CHILDWINDOW | WS_VISIBLE,
 			WindowRectSize.left,
@@ -269,7 +273,7 @@ int WINAPI wWinMain(
 	}
 	//DESTROY WINDOW.---------------------------------------------------------------------------
 	UnregisterClass(THIS_CLASSNAME, hInstance);
-	hk->~HotKey();
+	//hk->~HotKey();
 	RemoveTrayIcon(hWnd, 1);
 	return (int)msg.wParam;
 }

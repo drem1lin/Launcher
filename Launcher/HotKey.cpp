@@ -13,10 +13,10 @@ HotKey::HotKey(int id, HWND hWnd,UINT fsModifiers,UINT vk, wchar_t* Command, siz
 	ZeroMemory(this->Agrument, MAX_PATH * sizeof(wchar_t));
 
 	if (CommandLength != 0 && CommandLength<MAX_PATH && Command != nullptr)
-		CopyMemory(this->Path, Command, CommandLength);
+		CopyMemory(this->Path, Command, CommandLength*sizeof(wchar_t));
 
 	if (ArgLen != 0 && ArgLen < MAX_PATH && Arg != nullptr)
-		CopyMemory(this->Agrument, Arg, ArgLen);
+		CopyMemory(this->Agrument, Arg, ArgLen * sizeof(wchar_t));
 	
 	this->bRequireAdmin = asAdmin;
 
@@ -43,7 +43,7 @@ HotKey::HotKey()
 
 HotKey::~HotKey()
 {
-	if(isHotKeyRegistered)
+	if(this!=nullptr && isHotKeyRegistered)
 		UnregisterHotKey(hWnd, id);
 }
 
