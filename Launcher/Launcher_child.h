@@ -1,8 +1,6 @@
 #pragma once
 #include <Windows.h>
 
-#define CHILD_CLASSNAME L"Kaptur's Launcher child"
-
 #define ID_OPEN_FILE_DIALOG_BUTTON 0x5001
 #define ID_OPEN_FILE_EDIT 0x5002
 #define ID_OPEN_FILE_LABEL 0x5003
@@ -20,7 +18,8 @@
 #define ID_DELETE_BUTTON 0x5012
 
 
-
+#define PADDING 5
+#define PADDING_HALF 3
 
 typedef struct _WINDOW_CONTROLS
 {

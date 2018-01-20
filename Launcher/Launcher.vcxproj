@@ -161,6 +161,7 @@
   <ItemGroup>
     <ClCompile Include="..\sqlite\sqlite3.c" />
     <ClCompile Include="DBFunctions.cpp" />
+    <ClCompile Include="Launcher_ScrollWindow.cpp" />
     <ClInclude Include="DBFunctions.h" />
     <ClCompile Include="HotKey.cpp" />
     <ClCompile Include="Launcher_Child.cpp" />
@@ -171,6 +172,8 @@
     <ClInclude Include="Defines.h" />
     <ClInclude Include="HotKey.h" />
     <ClInclude Include="Launcher_child.h" />
+    <ClInclude Include="Launcher_Main.h" />
+    <ClInclude Include="Launcher_ScrollWindow.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

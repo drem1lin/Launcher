@@ -1,21 +1,21 @@
-#include <windows.h>
+#include "Launcher_Main.h"
 #include <Commctrl.h>
 #include <vector>
+#include <string>
 
 #include "resource.h"
 #include "HotKey.h"
 #include "Defines.h"
 
-#include "Launcher_child.h"
 #include "../sqlite/sqlite3.h"
 #include "DBFunctions.h"
+#include "Launcher_ScrollWindow.h"
+#include "Launcher_child.h"
 
+std::vector<HotKey> keys;
+std::vector<HWND> ChildWindows;
 
-
-UINT WM_TASKBARCREATED = 0;
-HINSTANCE g_hInst = 0;
 static BOOL g_bModalState = FALSE; //Is messagebox shown
-HotKey* hk = nullptr;
 								   //===================================================================================
 								   //ShowPopupMenu
 								   //===================================================================================
@@ -78,7 +78,8 @@ void AddTrayIcon(HWND hWnd, UINT uID, UINT uCallbackMsg, UINT uIcon)
 	nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
 	nid.uCallbackMessage = uCallbackMsg;
 	//LoadIconMetric(g_hInst, MAKEINTRESOURCE(IDI_ICON1), LIM_SMALL, &(nid.hIcon));
-	nid.hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_ICON1));
+	HINSTANCE hInst = (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
+	nid.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_ICON1));
 	wcscpy_s(nid.szTip, L"Fast App Launcher\0");
 
 	//SEND MESSAGE TO SYSTEM TRAY TO ADD ICON.--------------------------------------------
@@ -109,83 +110,168 @@ static void WMCommandProcessor(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	return;
 }
 
+bool GetWindowPos(HWND hWnd, int *x, int* y)
+{
+	HWND hParent = GetParent(hWnd);
+	if (hParent == NULL)
+		return false;
+
+	POINT p = { 0 };
+	
+	if (!x || !y)
+		return false;
+
+	if (0 == MapWindowPoints(hWnd, hParent, &p, 1))
+		return false;
+	*x = p.x;
+	*y = p.y;
+	return true;
+}
+
 //===================================================================================
 //WndProc
 //===================================================================================
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
-switch (uMsg)
-	{
-	case WM_CREATE:
-	{		
-		RECT WindowRectSize = { 0 };
-		int left = 0, right = 0, top = 0, bottom = 0;
-		AddTrayIcon(hWnd, 1, WM_APP, 0);
-		if (!GetClientRect(hWnd, &WindowRectSize))
+	int j = 0;
+	int ScrollBarWidth = 15;
+	SCROLLINFO si = { 0 };
+	RECT WindowRectSize = { 0 };
+	SCROLLWINDOWPARAMETERS sbp = { 0 };
+	MAINWINDOWPARAMETERS* mwp = nullptr;
+
+
+	switch (uMsg)
 		{
-			right = 470;
-			bottom = 310;
-		}
+		case WM_CREATE:
+		{	
+			CREATESTRUCT* CreateStruct = (CREATESTRUCT*)lParam;
+			CREATEMAINWINDOWPARAMETERS* cmwp = (CREATEMAINWINDOWPARAMETERS*)CreateStruct->lpCreateParams;
+			if (!GetClientRect(hWnd, &WindowRectSize))
+				break;
 
-		std::vector<HotKey> keys;
-		std::string dbName;
-		GetDataBaseName(dbName);
-		ReadSettingFromDatabase(const_cast<char*>(dbName.c_str()), keys);
+			AddTrayIcon(hWnd, 1, WM_APP, 0);
 
-		CreateWindowEx(0, CHILD_CLASSNAME, L"Child 1", WS_CHILDWINDOW | WS_VISIBLE,
-			WindowRectSize.left,
-			WindowRectSize.top,
-			WindowRectSize.right,
-			100,
-			hWnd,
-			NULL,
-			g_hInst,
-			NULL);
-		break;
-	}
+			HWND hScrollBar = CreateWindowEx(0, L"SCROLLBAR", NULL, WS_VISIBLE | WS_CHILD | SBS_VERT, WindowRectSize.right - ScrollBarWidth,
+				0, ScrollBarWidth, WindowRectSize.bottom, hWnd, (HMENU)IDC_VSCROLLBAR, CreateStruct->hInstance, NULL);
+				
+			sbp.hScrollBarHandle = hScrollBar;
 
-	case WM_CLOSE:
-		ShowWindow(hWnd, SW_HIDE);
-		//DestroyWindow(hWnd);
-		return 0;
+			int WindowCx = WindowRectSize.right - ScrollBarWidth - PADDING * 2;
+			int WindowCy = WindowRectSize.bottom - PADDING * 2;
 
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		break;
+			HWND Child=CreateWindowEx(0, SCROLLWINDOW_CLASSNAME, NULL, WS_CHILD | WS_VISIBLE,
+				PADDING, PADDING, WindowCx, WindowCy,
+				hWnd, NULL, CreateStruct->hInstance, &sbp);
+			DWORD err = GetLastError();
 
-	case WM_COMMAND:
-		WMCommandProcessor(hWnd, wParam, lParam);
-		break;
+			mwp = (MAINWINDOWPARAMETERS*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MAINWINDOWPARAMETERS));
+			if (mwp == NULL)
+			{
+				MessageBox(hWnd, L"Out of Memory.\nApplication closing.", L"Error", MB_OK);
+				ExitProcess(1);
+			}
 
-	case WM_APP:
-		if (g_bModalState)
-			break;
-		switch (lParam) 
-		{
-		case WM_LBUTTONDBLCLK:
-			ShowWindow(hWnd,SW_RESTORE);
-			break;
+			mwp->ScrollWindowX = mwp->ScrollWindowY = PADDING;
+			mwp->ScrollWindowStartCX = WindowCx;
+			mwp->ScrollWindowStartCY = WindowCy;
+			mwp->hScrollBar = hScrollBar;
+			mwp->hScrollableWindow = Child;
+			mwp->TaskBarCreatedMessage = mwp->TaskBarCreatedMessage;
+			if (NULL != SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)(mwp)))
+				MessageBox(hWnd, std::to_wstring(GetLastError()).c_str(), L"Error", MB_OK);
 
-		case WM_RBUTTONUP:
-			SetForegroundWindow(hWnd);
-			ShowPopupMenu(hWnd, NULL);
-			//PostMessage(hWnd, WM_APP + 1, 0, 0);
 			break;
 		}
-		break;
-	case WM_HOTKEY:
-		if (hk->isPressedKeyMatch(LOWORD((UINT)lParam), (UINT)wParam))
-		{
-			hk->ExecuteCommand();
+
+		case WM_CLOSE:
+			ShowWindow(hWnd, SW_HIDE);
+			//DestroyWindow(hWnd);
+			return 0;
+
+		case WM_DESTROY:
+			PostQuitMessage(0);
+			break;
+
+		case WM_COMMAND:
+			WMCommandProcessor(hWnd, wParam, lParam);
+			break;
+
+		case WM_APP:
+			if (g_bModalState)
+				break;
+			switch (lParam) 
+			{
+			case WM_LBUTTONDBLCLK:
+				ShowWindow(hWnd,SW_RESTORE);
+				break;
+
+			case WM_RBUTTONUP:
+				SetForegroundWindow(hWnd);
+				ShowPopupMenu(hWnd, NULL);
+				//PostMessage(hWnd, WM_APP + 1, 0, 0);
+				break;
+			}
+			break;
+		case WM_HOTKEY:
+			for (size_t i = 0; i < keys.size(); i++)
+			{
+				if (keys[i].isPressedKeyMatch(LOWORD((UINT)lParam), (UINT)wParam))
+					keys[i].ExecuteCommand();
+			}
+			break;
+		case WM_VSCROLL:
+			j = (int)HIWORD(wParam);
+			RtlZeroMemory(&si, sizeof(si));
+			si.cbSize = sizeof(SCROLLINFO);
+			si.fMask = SIF_POS | SIF_RANGE;
+			GetScrollInfo((HWND)lParam, SB_CTL, &si);
+			mwp = (MAINWINDOWPARAMETERS*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+			if (!mwp)
+				break;
+			switch ((int)LOWORD(wParam))
+			{
+			case SB_PAGEUP:
+			case SB_LINEUP:
+				if (si.nPos <= si.nMin)
+					break;
+				si.nPos -= 20;
+				if (si.nPos <= si.nMin)
+					si.nPos = si.nMin;
+				break;
+			case SB_PAGEDOWN:
+			case SB_LINEDOWN:
+				if (si.nPos >= si.nMax)
+					break;
+				si.nPos += 20;
+				if (si.nPos >= si.nMax)
+					si.nPos = si.nMax;
+				break;
+			case SB_THUMBPOSITION:
+			case SB_THUMBTRACK:
+				si.nPos = j;
+				break;
+			}
+			si.fMask = SIF_POS;
+			SetScrollInfo((HWND)lParam, SB_CTL, &si, TRUE);
+			if (!GetClientRect(mwp->hScrollableWindow, &WindowRectSize))
+				break;
+			MoveWindow(mwp->hScrollableWindow, mwp->ScrollWindowX, mwp->ScrollWindowY - si.nPos, 
+				WindowRectSize.right, WindowRectSize.bottom, TRUE);
+		//	SetWindowPos(mwp->hScrollableWindow, hWnd, mwp->ScrollWindowX, mwp->ScrollWindowY - si.nPos, 0, 0, SWP_NOSIZE);
+			UpdateWindow(hWnd);
+			break;
+			
+		default:
+			{
+				mwp = (MAINWINDOWPARAMETERS*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+				if (!mwp)
+					break;
+				if (uMsg == mwp->TaskBarCreatedMessage)
+					AddTrayIcon(hWnd, 1, WM_APP, 0);
+			}
+			break;
 		}
-		break;
-	default:
-		{
-			if (uMsg == WM_TASKBARCREATED)
-				AddTrayIcon(hWnd, 1, WM_APP, 0);
-		}
-		break;
-	}
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
@@ -205,7 +291,7 @@ void RegisterMainClass(HINSTANCE hInst)
 	wclx.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
 
 	wclx.lpszMenuName = NULL;
-	wclx.lpszClassName = THIS_CLASSNAME;
+	wclx.lpszClassName = MAINWINDOW_CLASSNAME;
 
 	RegisterClassEx(&wclx);
 }
@@ -226,7 +312,7 @@ int WINAPI wWinMain(
 	{
 		//CHECK IF PREVIOUS ISTANCE IS RUNNING.-----------------------------------------------------
 		HWND hPrev = NULL;
-		if (hPrev = FindWindow(THIS_CLASSNAME, TEXT("Title"))) {
+		if (hPrev = FindWindow(MAINWINDOW_CLASSNAME, TEXT("Title"))) {
 			MessageBox(NULL, TEXT("Previous instance alredy running!"), TEXT("Warning"), MB_OK);
 			return 0;
 		}
@@ -234,7 +320,8 @@ int WINAPI wWinMain(
 
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
-	WM_TASKBARCREATED = RegisterWindowMessageA("TaskbarCreated");
+	CREATEMAINWINDOWPARAMETERS cmwp = { 0 };
+	cmwp.TaskBarCreatedMessage = RegisterWindowMessageA("TaskbarCreated");
 
 	RECT WorkAreaSize;
 	WorkAreaSize.bottom = 720;
@@ -250,11 +337,12 @@ int WINAPI wWinMain(
 	UINT xPosition = WorkAreaSize.right - WorkAreaSize.left - xWindowsSize;
 	//REGISTER WINDOW.--------------------------------------------------------------------------
 	RegisterMainClass(hInstance);
+	RegisterScrollWindowClass(hInstance);
 	RegisterChildClass(hInstance);
 
-	g_hInst = hInstance;
 	//CREATE WINDOW.----------------------------------------------------------------------------
-	HWND hWnd = CreateWindow(THIS_CLASSNAME, TEXT("Title"), WS_SYSMENU | WS_CAPTION | WS_VSCROLL, xPosition, yPosition, xWindowsSize, yWindowsSize, NULL, NULL, hInstance, NULL);
+	HWND hWnd = CreateWindow(MAINWINDOW_CLASSNAME, TEXT("Title"), WS_SYSMENU | WS_CAPTION | WS_CLIPCHILDREN, 
+		xPosition, yPosition, xWindowsSize, yWindowsSize, NULL, NULL, hInstance, &cmwp);
 	if (!hWnd) 
 	{
 		MessageBox(NULL, L"Can't create window!", TEXT("Warning!"), MB_ICONERROR | MB_OK | MB_TOPMOST);
@@ -272,7 +360,7 @@ int WINAPI wWinMain(
 		DispatchMessage(&msg);
 	}
 	//DESTROY WINDOW.---------------------------------------------------------------------------
-	UnregisterClass(THIS_CLASSNAME, hInstance);
+	UnregisterClass(MAINWINDOW_CLASSNAME, hInstance);
 	//hk->~HotKey();
 	RemoveTrayIcon(hWnd, 1);
 	return (int)msg.wParam;

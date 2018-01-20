@@ -4,21 +4,20 @@
 class HotKey
 {
 public:
-	HotKey(int id, HWND hWnd, UINT fsModifiers, UINT vk, wchar_t* Command, size_t CommandLength, wchar_t* Arg, size_t ArgLen, bool asAdmin);
-	HotKey(int id, HWND hWnd, UINT fsModifiers, UINT vk, const wchar_t* Command, size_t CommandLength, const wchar_t* Arg, size_t ArgLen, bool asAdmin);
-	HotKey(int id, HWND hWnd, UINT fsModifiers, UINT vk, wchar_t* Command, size_t CommandLength, bool asAdmin);
-	HotKey(int id, HWND hWnd, UINT fsModifiers, UINT vk, wchar_t* Command, size_t CommandLength);
+	HotKey(int id, UINT fsModifiers, UINT vk, wchar_t* Command, size_t CommandLength, wchar_t* Arg, size_t ArgLen, bool asAdmin);
+	//HotKey(int id, UINT fsModifiers, UINT vk, const wchar_t* Command, size_t CommandLength, const wchar_t* Arg, size_t ArgLen, bool asAdmin);
+	HotKey(int id, UINT fsModifiers, UINT vk, wchar_t* Command, size_t CommandLength, bool asAdmin);
+	HotKey(int id, UINT fsModifiers, UINT vk, wchar_t* Command, size_t CommandLength);
+	HotKey(UINT fsModifiers, UINT vk, wchar_t* Command, size_t CommandLength, wchar_t* Arg, size_t ArgLen, bool asAdmin);
+	//HotKey(UINT fsModifiers, UINT vk, const wchar_t* Command, size_t CommandLength, const wchar_t* Arg, size_t ArgLen, bool asAdmin);
+	HotKey(UINT fsModifiers, UINT vk, wchar_t* Command, size_t CommandLength, bool asAdmin);
+	HotKey(UINT fsModifiers, UINT vk, wchar_t* Command, size_t CommandLength);
 	HotKey();
 	~HotKey();
 	void ExecuteCommand();
 	BOOL isPressedKeyMatch(UINT fsModifiers, UINT vk);
-	BOOL Register();
+	BOOL Register(HWND Window, int id);
 	BOOL Unregister();
-
-	HWND GetHWND()
-	{
-		return hWnd;
-	};
 
 	UINT GetFsModifiers()
 	{
@@ -47,7 +46,8 @@ public:
 
 private:
 	//Hotkey Data
-	int id;
+	int DbId;
+	int HotKeyRegistrationId;
 	HWND hWnd;
 	UINT fsModifiers;
 	UINT vk;

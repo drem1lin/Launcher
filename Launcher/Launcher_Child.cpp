@@ -7,16 +7,12 @@
 
 static void WMCommandProcessor(HWND hWnd, WPARAM wParam, LPARAM lParam);
 
-//extern HINSTANCE g_hInst;
-#define PADDING 5
-#define PADDING_HALF 3
-
 void CreateProgramSelector(WINDOW_CONTROLS* wc, HWND hWnd, CREATESTRUCT* CreateStruct)
 {
 	wc->selectprogramLabelHWND = CreateWindowEx(0, WC_STATIC, L"selectprogramLabelHWND",
 		WS_CHILD | WS_VISIBLE | WS_TABSTOP,
-		CreateStruct->x + PADDING,
-		CreateStruct->y + PADDING,
+		PADDING,
+		PADDING,
 		(CreateStruct->cx / 2) * 3 / 4 - PADDING_HALF - PADDING,
 		CreateStruct->cy / 4 - PADDING_HALF - PADDING,//5+3		
 		hWnd, (HMENU)(ID_OPEN_FILE_LABEL),
@@ -25,8 +21,8 @@ void CreateProgramSelector(WINDOW_CONTROLS* wc, HWND hWnd, CREATESTRUCT* CreateS
 	SetWindowText(wc->selectprogramLabelHWND, L"Select program:");
 
 	wc->openfileButtonHWND = CreateWindowEx(0, WC_BUTTON, L"Select", WS_CHILDWINDOW | WS_VISIBLE,
-		CreateStruct->x + CreateStruct->cx * 3 / 8 + PADDING_HALF,
-		CreateStruct->y + PADDING,
+		CreateStruct->cx * 3 / 8 + PADDING_HALF,
+		PADDING,
 		CreateStruct->cx / 8 - PADDING_HALF - PADDING_HALF,
 		CreateStruct->cy / 4 - PADDING - PADDING_HALF,
 		hWnd,
@@ -38,8 +34,8 @@ void CreateProgramSelector(WINDOW_CONTROLS* wc, HWND hWnd, CREATESTRUCT* CreateS
 		WS_EX_CLIENTEDGE, WC_EDIT,   // predefined class 
 		NULL,         // no window title 
 		WS_CHILD | WS_VISIBLE | ES_LEFT,
-		CreateStruct->x + PADDING,
-		CreateStruct->y + CreateStruct->cy / 4 + PADDING_HALF,
+		PADDING,
+		CreateStruct->cy / 4 + PADDING_HALF,
 		CreateStruct->cx / 2 - PADDING_HALF - PADDING,
 		CreateStruct->cy / 4 - PADDING_HALF - PADDING_HALF,   // set size in WM_SIZE message 
 		hWnd,         // parent window 
@@ -52,8 +48,8 @@ void CreateHotKeySelector(WINDOW_CONTROLS* wc, HWND hWnd, CREATESTRUCT* CreateSt
 {
 	wc->hotkeyLabelHWND = CreateWindowEx(0, WC_STATIC, L"hotkeyLabelHWND",
 		WS_CHILD | WS_VISIBLE | WS_TABSTOP,
-		CreateStruct->x + CreateStruct->cx/2 + PADDING_HALF,
-		CreateStruct->y + PADDING,
+		CreateStruct->cx/2 + PADDING_HALF,
+		PADDING,
 		CreateStruct->cx / 2 - PADDING - PADDING_HALF,
 		CreateStruct->cy / 4 - PADDING_HALF - PADDING,//5+3		
 		hWnd, (HMENU)(ID_HOTKEY_LABEL),
@@ -62,8 +58,8 @@ void CreateHotKeySelector(WINDOW_CONTROLS* wc, HWND hWnd, CREATESTRUCT* CreateSt
 	SetWindowText(wc->hotkeyLabelHWND, L"Choose hotkey:");
 
 	wc->modifiersComboBoxHWND = CreateWindowEx(0, WC_COMBOBOX, L"ModifiersComboBox", CBS_DROPDOWNLIST | WS_CHILDWINDOW | WS_VISIBLE | WS_VSCROLL | ES_AUTOVSCROLL,
-		CreateStruct->x + CreateStruct->cx / 2 + PADDING_HALF,
-		CreateStruct->y + CreateStruct->cy / 4 + PADDING_HALF,
+		CreateStruct->cx / 2 + PADDING_HALF,
+		CreateStruct->cy / 4 + PADDING_HALF,
 		CreateStruct->cx/4 - PADDING_HALF - PADDING_HALF,
 		CreateStruct->cy - PADDING_HALF - PADDING_HALF,
 		hWnd,
@@ -80,8 +76,8 @@ void CreateHotKeySelector(WINDOW_CONTROLS* wc, HWND hWnd, CREATESTRUCT* CreateSt
 	wc->virtualkeyEditWindowHWND = CreateWindowEx(WS_EX_CLIENTEDGE, WC_EDIT,   // predefined class 
 		NULL,         // no window title 
 		WS_CHILD | WS_VISIBLE | ES_LEFT,
-		CreateStruct->x + CreateStruct->cx *3/4 + PADDING_HALF,
-		CreateStruct->y + CreateStruct->cy / 4 + PADDING_HALF,
+		CreateStruct->cx *3/4 + PADDING_HALF,
+		CreateStruct->cy / 4 + PADDING_HALF,
 		CreateStruct->cx / 4 - PADDING - PADDING_HALF,
 		CreateStruct->cy / 4 - PADDING_HALF - PADDING_HALF ,   // set size in WM_SIZE message 
 		hWnd,         // parent window 
@@ -94,8 +90,8 @@ void CreateParametersSelector(WINDOW_CONTROLS* wc, HWND hWnd, CREATESTRUCT* Crea
 {
 	wc->argumentsLabelHWND = CreateWindowEx(0, WC_STATIC, L"argumentsLabelHWND",
 		WS_CHILD | WS_VISIBLE | WS_TABSTOP,
-		CreateStruct->x + PADDING,
-		CreateStruct->y + CreateStruct->cy / 2 + PADDING_HALF,
+		PADDING,
+		CreateStruct->cy / 2 + PADDING_HALF,
 		CreateStruct->cx / 2 - PADDING_HALF - PADDING,
 		CreateStruct->cy / 4 - PADDING_HALF - PADDING_HALF,//5+3		
 		hWnd, (HMENU)(ID_ARGS_LABEL),
@@ -107,8 +103,8 @@ void CreateParametersSelector(WINDOW_CONTROLS* wc, HWND hWnd, CREATESTRUCT* Crea
 		WS_EX_CLIENTEDGE, WC_EDIT,   // predefined class 
 		NULL,         // no window title 
 		WS_CHILD | WS_VISIBLE | ES_LEFT,
-		CreateStruct->x + PADDING,
-		CreateStruct->y + CreateStruct->cy * 3 / 4 + PADDING_HALF,
+		PADDING,
+		CreateStruct->cy * 3 / 4 + PADDING_HALF,
 		CreateStruct->cx / 2 - PADDING_HALF - PADDING,
 		CreateStruct->cy / 4 - PADDING_HALF - PADDING,   // set size in WM_SIZE message 
 		hWnd,         // parent window 
@@ -121,8 +117,8 @@ void CreateAsAdminAndButtons(WINDOW_CONTROLS* wc, HWND hWnd, CREATESTRUCT* Creat
 {
 	wc->asadminLabelHWND = CreateWindowEx(0, WC_STATIC, L"asadminLabelHWND",
 		WS_CHILD | WS_VISIBLE | WS_TABSTOP,
-		CreateStruct->x + CreateStruct->cx / 2 + PADDING_HALF,
-		CreateStruct->y + CreateStruct->cy / 2 + PADDING_HALF,
+		CreateStruct->cx / 2 + PADDING_HALF,
+		CreateStruct->cy / 2 + PADDING_HALF,
 		CreateStruct->cx / 2 - PADDING_HALF - PADDING_HALF,
 		CreateStruct->cy / 4 - PADDING_HALF - PADDING_HALF,//5+3		
 		hWnd, (HMENU)(ID_AS_ADMIN_LABEL),
@@ -131,8 +127,8 @@ void CreateAsAdminAndButtons(WINDOW_CONTROLS* wc, HWND hWnd, CREATESTRUCT* Creat
 	SetWindowText(wc->asadminLabelHWND, L"As admin ");
 
 	wc->asadminChechboxHWND = CreateWindowEx(0, WC_BUTTON, L"", BS_AUTOCHECKBOX | BS_CHECKBOX | WS_CHILDWINDOW | WS_VISIBLE,
-		CreateStruct->x + CreateStruct->cx *3/ 4 -15-PADDING_HALF,
-		CreateStruct->y + CreateStruct->cy / 2 + PADDING_HALF,
+		CreateStruct->cx *3/ 4 -15-PADDING_HALF,
+		CreateStruct->cy / 2 + PADDING_HALF,
 		CreateStruct->cx / 2 - PADDING_HALF - PADDING_HALF,
 		CreateStruct->cy / 4 - PADDING_HALF - PADDING_HALF,//5+3
 		hWnd,
@@ -141,8 +137,8 @@ void CreateAsAdminAndButtons(WINDOW_CONTROLS* wc, HWND hWnd, CREATESTRUCT* Creat
 		NULL);
 
 	wc->saveButtonHWND = CreateWindowEx(0, WC_BUTTON, L"Save", WS_CHILDWINDOW | WS_VISIBLE,
-		CreateStruct->x + CreateStruct->cx /2 + PADDING_HALF,
-		CreateStruct->y + CreateStruct->cy*3/4+PADDING_HALF,
+		CreateStruct->cx /2 + PADDING_HALF,
+		CreateStruct->cy*3/4+PADDING_HALF,
 		CreateStruct->cx / 4 - PADDING_HALF - PADDING_HALF,
 		CreateStruct->cy / 4 - PADDING - PADDING_HALF,
 		hWnd,
@@ -151,8 +147,8 @@ void CreateAsAdminAndButtons(WINDOW_CONTROLS* wc, HWND hWnd, CREATESTRUCT* Creat
 		NULL);
 
 	wc->deleteButtonHWND = CreateWindowEx(0, WC_BUTTON, L"Delete", WS_CHILDWINDOW | WS_VISIBLE,
-		CreateStruct->x + CreateStruct->cx * 3 / 4 + PADDING_HALF,
-		CreateStruct->y + CreateStruct->cy * 3 / 4 + PADDING_HALF,
+		CreateStruct->cx * 3 / 4 + PADDING_HALF,
+		CreateStruct->cy * 3 / 4 + PADDING_HALF,
 		CreateStruct->cx / 4 - PADDING_HALF - PADDING,
 		CreateStruct->cy / 4 - PADDING - PADDING_HALF,
 		hWnd,
@@ -170,6 +166,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	case WM_CREATE:
 	{
 		CREATESTRUCT* CreateStruct = (CREATESTRUCT*)lParam;
+		HotKey* key = (HotKey*)CreateStruct->lpCreateParams;
 		WINDOW_CONTROLS* wc =	(WINDOW_CONTROLS*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINDOW_CONTROLS));
 		if (wc == NULL)
 		{
@@ -182,42 +179,16 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		CreateHotKeySelector(wc, hWnd, CreateStruct);
 		CreateParametersSelector(wc, hWnd, CreateStruct);
 		CreateAsAdminAndButtons(wc, hWnd, CreateStruct);
-/*
-
-		wc->asadminChechboxHWND = CreateWindowEx(0, WC_BUTTON, L"Checkbox", BS_AUTOCHECKBOX| BS_CHECKBOX| WS_CHILDWINDOW | WS_VISIBLE,
-			360,
-			15,
-			20,
-			20,
-			hWnd,
-			(HMENU)ID_AS_ADMIN_CHECKBOX,
-			CreateStruct->hInstance,
-			NULL);
-
-		wc->asadminLabelHWND = CreateWindowEx(0, WC_STATIC, L"ST_U",
-			WS_CHILD | WS_VISIBLE | WS_TABSTOP,
-			385, 15, 20, 20,
-			hWnd, (HMENU)(ID_AS_ADMIN_LABEL),
-			CreateStruct->hInstance,
-			NULL);
-		SetWindowText(wc->asadminLabelHWND, L"As admin ");
-
-		wc->modifiersListBox = CreateWindowEx(WS_EX_CLIENTEDGE, WC_COMBOBOX, L"ModifiersListBox", CBS_DROPDOWNLIST| WS_CHILDWINDOW | WS_VISIBLE | WS_VSCROLL | ES_AUTOVSCROLL,
-			410,
-			15,
-			120,
-			300,
-			hWnd,
-			(HMENU)ID_MODIFIERS_LISTBOX,
-			CreateStruct->hInstance,
-			NULL);
-
-		SendMessage(wc->modifiersListBox, CB_ADDSTRING, 0, (LPARAM)L"MOD_ALT");
-		SendMessage(wc->modifiersListBox, CB_ADDSTRING, 0, (LPARAM)L"MOD_CONTROL");
-		SendMessage(wc->modifiersListBox, CB_ADDSTRING, 0, (LPARAM)L"MOD_SHIFT");
-		SendMessage(wc->modifiersListBox, CB_ADDSTRING, 0, (LPARAM)L"MOD_WIN");
-		SendMessage(wc->modifiersListBox, CB_SETCURSEL, 0, 0);
-	*/	
+		if (key!=nullptr)
+		{
+			SetWindowText(wc->filepathEditWindowHWND, key->GetPath());
+			SetWindowText(wc->argumentsEditWindowHWND, key->GetArgs());
+			UINT vk = key->GetVK();
+			SetWindowText(wc->virtualkeyEditWindowHWND, (wchar_t*)(&vk));
+			SendMessage(wc->asadminChechboxHWND, BM_SETCHECK, key->GetAsAdmin()!=0 ? BST_CHECKED: BST_UNCHECKED, 0);
+			SendMessage(wc->modifiersComboBoxHWND, CB_SETCURSEL, key->GetFsModifiers(), 0);
+		}
+		
 		if (NULL != SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)(wc)))
 			MessageBox(hWnd, std::to_wstring(GetLastError()).c_str(), L"Error", MB_OK);
 
@@ -329,13 +300,16 @@ bool InitializeHotKeyFromWindowData(WINDOW_CONTROLS* wc, HotKey& key, HWND hWnd)
 	
 	fsModifiers = (UINT) SendMessage(wc->modifiersComboBoxHWND, CB_GETCURSEL, 0, 0);
 
-	key = *new HotKey(0, hWnd, fsModifiers, vk, const_cast<wchar_t*>(Path.c_str()), Path.size(), const_cast<wchar_t*>(Agrument.c_str()), argslen, bRequireAdmin);
+	key = *new HotKey(0, fsModifiers, vk, const_cast<wchar_t*>(Path.c_str()), Path.size(), const_cast<wchar_t*>(Agrument.c_str()), argslen, bRequireAdmin);
 	return true;
 }
 
 
 static void WMCommandProcessor(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
+	WINDOW_CONTROLS* wc = (PWINDOW_CONTROLS)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+	if (!wc)
+		return;
 	switch (LOWORD(wParam))
 	{
 	case ID_OPEN_FILE_DIALOG_BUTTON:
@@ -343,22 +317,19 @@ static void WMCommandProcessor(HWND hWnd, WPARAM wParam, LPARAM lParam)
 		std::wstring FileName;
 		if (!GetExecutibleFileName(hWnd, FileName))
 			break;
-		WINDOW_CONTROLS* wc = (PWINDOW_CONTROLS)GetWindowLongPtr(hWnd, GWLP_USERDATA);
-		if (wc->filepathEditWindowHWND!=NULL)
+		if (wc->filepathEditWindowHWND != NULL)
 			SetWindowText(wc->filepathEditWindowHWND, FileName.c_str());
 		break;
 	}
 	case ID_SAVE_BUTTON:
 	{
 		HotKey key;
-		WINDOW_CONTROLS* wc = (PWINDOW_CONTROLS)GetWindowLongPtr(hWnd, GWLP_USERDATA);
-		if (wc != 0 && InitializeHotKeyFromWindowData(wc, key, hWnd))
+		if (InitializeHotKeyFromWindowData(wc, key, hWnd))
 		{
 			std::string dbName;
 			GetDataBaseName(dbName);
 			SaveSettingsToDataBase(const_cast<char*>(dbName.c_str()), "COMMANDS", key);
 		}
-			wc++;
 		break;
 	}
 	default:
